@@ -1,17 +1,15 @@
 import torch
 import torch.nn as nn
 
+import utils
 from utils import degree, adjacency_norms
 
 
 class MessageLayer(nn.Module):
-    def __init__(self, in_dim: int, out_dim: int, name=None, bias=False):
+    def __init__(self):
         super().__init__()
-        self.name = name
-        self.transform = nn.Linear(in_dim, out_dim, bias=bias)
 
     def forward(self, X, A, normalise=True):
-        X = self.transform(X)
         X = A @ X
 
         if normalise:
