@@ -20,24 +20,28 @@ class RelationalLayer(nn.Module):
 
 
 class RGCN(nn.Module):
-    def __init__(self, in_dim: int, out_dim: int, n_relations: int, bias=False):
+    def __init__(self, in_dim: int, out_dim: int, adjacency: torch.Tensor, bias=False,
+                 activation=nn.ReLU):
         super(RGCN, self).__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
-        self.n_relations = n_relations
+        self.n_relations = adjacency.shape[0]
 
         # Trainable parameters
         self.loop_transform = nn.Linear(in_dim, out_dim, bias=bias)
-        self.rel_transforms = [RelationalLayer(in_dim, out_dim, bias) for _ in range(n_relations)]
+        self.rel_transforms = [RelationalLayer(in_dim, out_dim, bias) for _ in range(adjacency.shape[0])]
+        self.rel_transforms = nn.ModuleList(self.rel_transforms)
 
-        self.activation = nn.Identity()
+        self.adjacency = adjacency
+        self.activation = activation()
 
-    def forward(self, X, A):
+    def forward(self, X):
+        A = self.adjacency
         assert A.shape[0] == self.n_relations
 
         res = self.loop_transform(X)
 
-        for rel in tqdm(range(self.n_relations)):
+        for rel in (range(self.n_relations)):
             adj = A[rel].detach()
             res += self.rel_transforms[rel](X, adj)
 

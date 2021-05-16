@@ -25,17 +25,34 @@ def degree(adjacency: torch.Tensor) -> torch.Tensor:
         return torch.diag(deg)
 
 
-def avg_adjacency(adjacency: torch.Tensor) -> torch.Tensor:
-    degree = adjacency2degree(adjacency)
-    avg_adj = torch.inverse(degree) @ adjacency
-
-    return avg_adj
-
-def random_adj(n: int, e:int) -> torch.Tensor:
-    pos = torch.randint(n, (2, e))
+def random_adj(n: int, e: int, n_r: int = 0) -> torch.Tensor:
+    edge_idx = torch.randint(low=0, high=n, size=(2, e))
     val = torch.ones(e)
 
-    return torch.sparse_coo_tensor(pos, val)
+    if n_r:
+        rel = torch.randint(low=0, high=n_r, size=(1, e))
+        edge_idx = torch.cat([rel, edge_idx], dim=0)
+
+        return torch.sparse_coo_tensor(indices=edge_idx, values=val, size=(n_r, n, n))
+
+    return torch.sparse_coo_tensor(indices=edge_idx, values=val, size=(n, n))
+
+
+def random_labels(X: torch.Tensor, n_labels: int) -> torch.Tensor:
+    """
+    A dumb transformation that can be approximated by Graph Convolution.
+    :param X: Input features of size [n, dim0]
+    :param n_labels: Tensor of size [n_labels]
+    :return:
+    """
+    with torch.no_grad():
+        dim0 = X.shape[-1]
+
+        W = torch.rand(n_labels, dim0)
+        H = X @ W.T
+        Y = torch.argmax(H, dim=-1)
+        return Y
+
 
 def glorot_init(param: torch.Tensor):
     torch.nn.init.xavier_uniform_(param)

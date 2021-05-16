@@ -31,14 +31,17 @@ class AdjacencyMatrix:
 
 
 if __name__ == '__main__':
-    n = 169343
-    e = 1166243
-    n_r = 5
+    n = 50
+    e = 300
+    n_r = 3
 
     torch.manual_seed(15)
 
     pos = torch.randint(low=0, high=n, size=(2, e))
-    val = torch.randint(low=0, high=n_r, size=(e, 1))
+    rel = torch.randint(low=0, high=n_r, size=(1, e))
+    val = torch.ones(e)
 
-    A = AdjacencyMatrix(edge_idx=pos, relation_type=val, n_nodes=n)
-    A[0]
+    edge_idx = torch.cat([rel, pos], dim=0)
+
+    A = torch.sparse_coo_tensor(indices=edge_idx, values=val, size=(n_r, n,n))
+
